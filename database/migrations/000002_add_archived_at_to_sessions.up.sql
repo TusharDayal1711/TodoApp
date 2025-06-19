@@ -1,0 +1,2 @@
+ALTER TABLE sessions
+ADD COLUMN archived_at TIMESTAMP;
