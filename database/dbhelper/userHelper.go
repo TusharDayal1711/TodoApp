@@ -37,7 +37,8 @@ func CreateUser(user models.User) error {
 func GetUserByEmail(email string) (models.User, error) {
 	var user models.User
 	err := db.DB.Get(&user, `
-		SELECT * FROM users 
+		SELECT id, password
+		FROM users
 		WHERE email = $1 AND archived_at IS NULL
 	`, email)
 	return user, err

@@ -70,7 +70,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isSessionExist != "" {
-		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
 			"message": "Already logged in",
 			"session": isSessionExist,
