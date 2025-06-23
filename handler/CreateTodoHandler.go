@@ -2,18 +2,25 @@ package handlers
 
 import (
 	"TodoApp/database/dbhelper"
+	"TodoApp/middleware"
 	"TodoApp/models"
-	"TodoApp/utils"
 	"encoding/json"
 	"net/http"
 )
 
 func CreateTodoHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.AuthHandler(r)
+	//userID, err := utils.AuthHandler(r)
+	//if err != nil {
+	//	http.Error(w, err.Error(), http.StatusUnauthorized)
+	//	return
+	//}
+
+	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	var todoObj struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`

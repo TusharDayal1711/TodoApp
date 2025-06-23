@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"TodoApp/database/dbhelper"
+	"TodoApp/middleware"
 	"TodoApp/models"
 	"TodoApp/utils"
 	"encoding/json"
@@ -9,11 +10,12 @@ import (
 )
 
 func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.AuthHandler(r)
+	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	var todoObj struct {
 		ID          int    `json:"id"`
 		Title       string `json:"title"`

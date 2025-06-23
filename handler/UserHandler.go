@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"TodoApp/database/dbhelper"
+	"TodoApp/middleware"
 	"TodoApp/models"
-	"TodoApp/utils"
+	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"encoding/json"
@@ -62,10 +64,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid email or password", http.StatusUnauthorized)
 		return
 	}
+	fmt.Println(user.ID)
 
 	isSessionExist, err := dbhelper.CheckIfExist(user.ID)
-	if err != nil {
-		http.Error(w, "Internal server error ", http.StatusInternalServerError)
+	if err != nil && sql.ErrNoRows == nil {
+		http.Error(w, "Internal server error.... ", http.StatusInternalServerError)
 		return
 	}
 
@@ -90,12 +93,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.Header.Get("Authorization")
-	userID, err := utils.AuthHandler(r)
+	//userID, err := utils.AuthHandler(r)
+	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "user not authorized", http.StatusUnauthorized)
 		return
 	}
-	_ = userID //no use in this func
+
+	_ = userID //no use in this func7r
 
 	err = dbhelper.RemoveSession(sessionID)
 	if err != nil {

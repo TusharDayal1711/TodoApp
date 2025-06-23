@@ -2,20 +2,20 @@ package handlers
 
 import (
 	"TodoApp/database/dbhelper"
-	"TodoApp/utils"
+	"TodoApp/middleware"
 	"encoding/json"
 	"net/http"
 )
 
 func GetTodoByStatus(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.AuthHandler(r)
+	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	status := r.URL.Query().Get("status")
 	if status == "" {
-		http.Error(w, "query parameter 'status' is required", http.StatusBadRequest)
+		http.Error(w, "query parameter status is required", http.StatusBadRequest)
 		return
 	}
 	todos, err := dbhelper.GetTodosStatus(userID, status)

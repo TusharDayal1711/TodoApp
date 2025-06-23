@@ -46,3 +46,7 @@ func RemoveSession(sessionID string) error {
 	}
 	return nil
 }
+
+func GetUserBySession() {
+
+}

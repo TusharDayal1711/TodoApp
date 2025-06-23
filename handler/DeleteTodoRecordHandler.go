@@ -2,16 +2,15 @@ package handlers
 
 import (
 	"TodoApp/database/dbhelper"
-	"TodoApp/utils"
-
+	"TodoApp/middleware"
 	"encoding/json"
 	"net/http"
 )
 
 func DeleteTodoRecord(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.AuthHandler(r)
+	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
