@@ -4,13 +4,13 @@ import (
 	"TodoApp/database/dbhelper"
 	"TodoApp/middleware"
 	"TodoApp/models"
-	"database/sql"
+	"TodoApp/utils"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
-
-	"encoding/json"
 	"net/http"
+	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44,74 +44,68 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
+	w.WriteHeader(http.StatusOK) //sending status code 200
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "User registered successfully...",
 	})
 }
 
-// login handler
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		http.Error(w, "invalid input", http.StatusBadRequest)
+		return
 	}
+
 	user, err := dbhelper.GetUserByEmail(input.Email)
+	fmt.Println(user)
 	if err != nil || bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)) != nil {
-		http.Error(w, "invalid email or password", http.StatusUnauthorized)
-		return
-	}
-	fmt.Println(user.ID)
-
-	isSessionExist, err := dbhelper.CheckIfExist(user.ID)
-	if err != nil && sql.ErrNoRows == nil {
-		http.Error(w, "Internal server error.... ", http.StatusInternalServerError)
+		http.Error(w, "invalid email or password....", http.StatusUnauthorized)
 		return
 	}
 
-	if isSessionExist != "" {
-		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Already logged in",
-			"session": isSessionExist,
-		})
-		return
-	}
-
-	sessionID, err := dbhelper.CreateSession(user.ID)
+	accessToken, err := utils.GenerateJWT(user.ID)
 	if err != nil {
-		http.Error(w, "could not create session", http.StatusInternalServerError)
+		http.Error(w, "could not create access token", http.StatusInternalServerError)
+		return
+	}
+
+	refreshToken, err := utils.GenerateRefreshToken(user.ID)
+	if err != nil {
+		http.Error(w, "could not create refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	expiresAt := time.Now().Add(7 * 24 * time.Hour) //refresh last for 7 days
+	err2 := dbhelper.StoreRefreshTokenToDB(user.ID, refreshToken, expiresAt)
+	if err2 != nil {
+		http.Error(w, "Could not create refresh token", http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Login successful...",
-		"session": sessionID,
+		"message":       "Login successful",
+		"acess_token":   accessToken,
+		"refresh_token": refreshToken,
 	})
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	sessionID := r.Header.Get("Authorization")
-	//userID, err := utils.AuthHandler(r)
 	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
 		http.Error(w, "user not authorized", http.StatusUnauthorized)
 		return
 	}
 
-	_ = userID //no use in this func7r
-
-	err = dbhelper.RemoveSession(sessionID)
+	err = dbhelper.DeleteRecord(userID)
 	if err != nil {
-		if strings.Contains(err.Error(), "custom_error_id") {
-			http.Error(w, "No session removed...", http.StatusInternalServerError)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		http.Error(w, "failed to delete token", http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Logout successful",
 	})
-} //
+}
