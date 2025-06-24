@@ -4,7 +4,6 @@ import (
 	"TodoApp/database/dbhelper"
 	"TodoApp/middleware"
 	"TodoApp/models"
-	"TodoApp/utils"
 	"encoding/json"
 	"net/http"
 )
@@ -49,9 +48,9 @@ func UpdateTodoHandler(w http.ResponseWriter, r *http.Request) {
 
 // Marking toggle task
 func MarkTodoCompletedHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.AuthHandler(r)
+	userID, err := middleware.AuthUserFromMiddleWare(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 

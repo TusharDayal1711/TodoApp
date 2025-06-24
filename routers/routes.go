@@ -19,8 +19,10 @@ func GetRoutes() *mux.Router {
 	router.HandleFunc("/register", handlers.RegisterHandler).Methods("POST")
 	router.HandleFunc("/login", handlers.LoginHandler).Methods("POST")
 
+	//router.HandleFunc("/refresh-token", middleware.RefreshTokenHandler).Methods("GET")
+
 	protected := router.PathPrefix("/").Subrouter()
-	protected.Use(middleware.AuthMiddleware)
+	protected.Use(middleware.JWTAuthMiddleware)
 
 	//user routes
 	protected.HandleFunc("/fetch-user-info", handlers.GetUserHandler).Methods("GET")

@@ -13,6 +13,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+
 	if err := dbhelper.DeleteUserByID(userID); err != nil {
 		http.Error(w, "failed to delete user...", http.StatusInternalServerError)
 		return
